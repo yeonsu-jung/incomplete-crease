@@ -21,10 +21,6 @@ pcshow(ptCloud)
 
 %%
 close all;
-imagesc(summed);
-
-%%
-close all;
 orthosliceViewer(zstack_clean)
 %%
 center = [968,942,347];
@@ -44,12 +40,24 @@ plot3v(point_cloud(1:1000:end,:),'.');
 xlabel('x');
 ylabel('y')
 axis equal
+%%
+sparse_points = point_cloud(1:1000:end,:);
+close all;
+plot3v(sparse_points,'.'); hold on;
 
+I = ( sparse_points(:,3) < -165 ) &...
+( sparse_points(:,1) < 950 ) & ...
+( sparse_points(:,1) < 1050 ) & ...
+( sparse_points(:,2) < 0 ) & ...
+( sparse_points(:,2) > -400 );
+
+plot3v(sparse_points(I,:),'.');
+%%
+sparse_points(I,:) = [];
 %%
 axang = [0 0 1 pi/2];
 rotm = axang2rotm(axang);
 
-sparse_points = point_cloud(1:1000:end,:);
 rotated = zeros(size(sparse_points));
 for i = 1:size(sparse_points,1)
     rotated(i,:) = (rotm*sparse_points(i,:)')';
@@ -72,4 +80,14 @@ end
 close all;
 plot3v(rotated,'.'); axis equal;
 xlabel('x');
-ylabel('y')
+ylabel('y');
+
+%%
+cen_x = 942;
+cen_y = 968;
+cen_z = 347;
+
+aligned = sparse_points - [cen_x,cen_y,cen_z];
+
+%%
+
