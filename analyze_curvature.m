@@ -67,18 +67,60 @@ pcshow(ptCloud)
 %%
 colormap(magma)
 %%
-sparse_points = all_points(1:100:end,:);
+sparse_points = all_points(1:1:end,:);
+%%
+tail = [-857,68,-193];
+% center = [17, 53, -1];
+center = [mean(all_points(:,1:2)),max(all_points(:,3))];
+%%
+centered = all_points - center;
+
+close all;
+plot3v(centered);
+%%
+I = rwnorm(centered) < 150;
+close all;
+plot3v(centered(I,:),'.');axis equal;
+%%
+close all;
+plot_pointcloud(centered(I,:));
+
+%%
+plane_vector = [0,1,0];
+centered.*plane_vector
+
+%%
+stat = get_principal_axis_length(all_points);
+%%
+stat.EigenVectors
+
 %%
 close all;
 plot3v(sparse_points,'.');
-%
-tail = [-857,68,-193];
-center = [17, 53, -1];
-
 hold on;
 plot3v([tail;center],'k','linewidth',2);
+
+quiver3v(center,-stat.EigenVectors(:,1)'*1000,'k-')
+quiver3v(center,stat.EigenVectors(:,2)'*1000)
+quiver3v(center,stat.EigenVectors(:,3)'*1000)
 %%
 crease_length = norm(tail-center);
+%%
+sparse_points = all_points(1:100:end,:);
+stat = get_principal_axis_length(sparse_points);
+R = stat.EigenVectors';
+
+transformed = zeros(size(sparse_points));
+for i = 1:size(sparse_points,1)
+    tmp = R*sparse_points(i,:)';
+    transformed(i,:) = tmp(1:3)';
+end
+%%
+close all;
+% plot3v(sparse_points,'.');hold on;
+plot3v(transformed,'.');
+axis equal;
+
 %%
 % transformation matrix 
 
@@ -131,8 +173,6 @@ ptCloud = pointCloud([X,Y,Z]);
 close all;
 pcshow(ptCloud)
 %%
-theta = linspace(0,2*pi,100);
-%%
 [az,elev,~] = cart2sph(transformed(:,1),transformed(:,2),transformed(:,3));
 %%
 I = rwnorm(az - 0) < pi/100;
@@ -147,6 +187,34 @@ plot(transformed(I,2),transformed(I,3),'o');
 %%
 % crease angle
 
+I_positive = transformed(:,2) >= 0;
+I_negative = transformed(:,2) < 0;
+%%
+stats_positive = get_principal_axis_length(transformed(I_positive,:));
+stats_negative = get_principal_axis_length(transformed(I_negative,:));
+%%
+symmetric_score(transformed)
+%%
+clc
+sparse_points = all_points(1:1000:end,:);
+clc
+x0 = [center,tail,-pi/20];
+options = optimset('PlotFcns',@optimplotfval);
+x_opt = fminsearch(@(x) objective_function(sparse_points,x),x0,options);
+%%
+transformed = get_transformed_pointcloud(sparse_points,x_opt);
+%%
+
+
+%%
+center = x_opt(1:3);
+tail = x_opt(4:6);
+close all;
+plot3v(transformed,'.');
+hold on;
+plot3v([center;tail],'linewidth',2);
+axis equal;
+% view([0,1])
 
 
 %%
@@ -213,6 +281,54 @@ plot3v(transformed(I,:),'o');
 
 
 %%
+function score = objective_function(sparse_points,x)
+    transformed = get_transformed_pointcloud(sparse_points,x);
+    score = symmetric_score(transformed);
+end
+
+function transformed = get_transformed_pointcloud(sparse_points,x)
+
+center = x(1:3);
+tail = x(4:6);
+rotation_angle = x(7);
+
+crease_length = norm(tail-center);
+T2 = rigidTransformFrom2Points([center;tail],[[0,0,0];[1,0,0]*crease_length]);
+transformed = zeros(size(sparse_points));
+
+twd = [0,1,1];
+twd = twd/norm(twd);
+R = rotMat([0,1,0]',twd',rotation_angle);
+
+for i = 1:size(sparse_points,1)
+    tmp = (T2*[sparse_points(i,:),1]');
+    transformed(i,:) = tmp(1:3)';
+end
+
+for i = 1:size(sparse_points,1)    
+    tmp = R*transformed(i,:)';
+    transformed(i,:) = tmp';
+end
+
+end
+
+
+function score3  = symmetric_score(transformed)
+    I_positive = transformed(:,2) >= 0;
+    I_negative = transformed(:,2) < 0;
+
+    % transformed(I_positive,:) 
+    
+    stats_positive = get_principal_axis_length(transformed(I_positive,:));
+    stats_negative = get_principal_axis_length(transformed(I_negative,:));
+        
+    score1 = norm(stats_positive.PrincipalAxisLength - stats_negative.PrincipalAxisLength);
+    score2 = norm(stats_positive.Centroid([1,3]) - stats_negative.PrincipalAxisLength([1,3]));
+
+    score3 = sqrt(score1^2 + score2^2);
+
+end
+
 function d = distancePointToLine(x1, y1, x2, y2, x3, y3)
     % Compute the numerator of the formula
     numerator = abs((x3 - x2) * (y2 - y1) - (x2 - x1) * (y3 - y2));
@@ -334,4 +450,14 @@ rot = eye(d) + sin(alpha)*A + (cos(alpha) - 1)*(a*a' +c*c');
 end
 
 
+function plot_pointcloud(all_points)
 
+X = all_points(:,1);
+Y = all_points(:,2);
+Z = all_points(:,3);
+
+ptCloud = pointCloud([X,Y,Z]);
+pcshow(ptCloud)
+
+
+end
