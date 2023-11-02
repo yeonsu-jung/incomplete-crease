@@ -375,6 +375,9 @@ for i = 1:num_R
     
 
 end
+xlabel('x');
+ylabel('y');
+zlabel('z');
 
 %%
 
@@ -382,41 +385,106 @@ R = 300;
 I_R = rwnorm(r - R) < delta_R;    
 
 close all;
+plot3v(rotated(I_R,:),'.');
+%%
+close all;
 plot(az(I_R),el(I_R),'.');
+%%
+az2 = az + pi;
+az2(az2 > pi) = az2(az2 > pi) - 2*pi;
+
+close all;
+plot(az2(I_R),el(I_R),'.');
+%%
 
 %%
 
-num_az = 30;
-az_range = 2*pi;
-delta_az = pi/100;
-az_bin = linspace(-az_range/2,az_range/2,num_az);
+num_az = 250;
+az_range = 0.2;
+delta_az = 0.01;
+offset = -0.02;
+az_bin = linspace(-az_range/2-offset,az_range/2-offset,num_az)';
 
+num_R = 5;
 binned_data = zeros(num_az,num_R);
 R_list = linspace(350,850,num_R);
 
-az2 = mod(az+pi,-2*pi);
+% az2 = mod(az+pi,-2*pi);
 % given fixed R
 for i = 1:num_R
     I_R = rwnorm(r - R_list(i)) < delta_R;
     binned_el = zeros(num_az,1);
     for j = 1:num_az
-        I = rwnorm(az - az_bin(j)) < delta_az;
+        I = rwnorm(az2 - az_bin(j)) < delta_az;
         % plot(az2(I_R&I),el(I_R&I),'.');hold on;    
-        binned_data(j,i) = mean(el(I_R&I));
+        binned_data(j,i) = min(el(I_R&I));
     end
 end
 
 %%
+RR = repmat(R_list(i),[numel(az_bin),1]);
+
+clc
+[x,y,z] = sph2cart(az(I_R&I),binned_data(:,i),RR);
+
+%%
+
+%%
+close all;
+plot3(x,y,z);
+hold on;
+plot3v(rotated(I_R,:),'.');
+%%
 close all;
 plot(az_bin,binned_data(:,1:end),'o-');
+
+hold on;
+
 % need a bit of re-adjustment; why?
 %%
 
 
 %%
 % so, crease angle...
+num_az = 100;
+az_range = pi/2;
+delta_az = pi/100;
 
+num_R = 1;
+delta_R = 1;
+binned_data_fine = zeros(num_az,num_R);
+R_list = linspace(350,850,num_R);
 
+az2 = mod(az+pi/2,-2*pi);
+az2 = az;
+az2(az > pi) = -az(az > pi);
+
+az_bin = linspace(-az_range/2,az_range/2,num_az);
+
+% given fixed R
+close all;
+
+clr = viridis(num_az);
+for i = 1:num_R
+    R = R_list(i);
+    R = 500;
+    I_R = rwnorm(r - R) < delta_R;
+    binned_el = zeros(num_az,1);
+    for j = 1:num_az
+        I = rwnorm(az - az_bin(j)) < delta_az;
+        binned_data_fine(j,i) = mean(el(I_R&I));
+        % plot(az2(I_R&I),el(I_R&I),'.');hold on;
+
+        plot3v(rotated(I_R&I,:),'.');hold on;
+
+        % plot(az(I_R&I),el(I_R&I),'.');hold on;    
+        % plot(mean(az(I_R&I)),mean(el(I_R&I)),'.');hold on;
+        % plot3v(new_new_centered2(I_R&I,:),'.','colo/r',clr(j,:));hold on;
+
+    end
+    ;
+end
+% axis equal;
 
 %%
 function score = objective_function(centered,angx)
