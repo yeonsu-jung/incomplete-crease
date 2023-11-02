@@ -242,6 +242,8 @@ for i_theta = 1:num_sampling
     psi_err_list(i_theta) = std(elev(I));
 end
 %%
+
+%%
 close all;
 errorbar(theta_list,psi_list,psi_err_list,'o');
 %%
