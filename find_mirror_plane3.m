@@ -105,6 +105,8 @@ plot3v(tail,'ro','markersize',10,'linewidth',5);
 plot3v(centered(1:500:end,:),'.');
 
 %%
+
+%%
 % ruled surface
 
 
@@ -139,13 +141,7 @@ plot3v(new_centered(1:500:end,:),'.');
 az2 = az + pi;
 I = az2 > pi;
 az2(I) = az2(I) - 2*pi;
-%%
-az3 = mod(az+pi,-2*pi);
-%
-az2(1:10)
-az3(1:10)
-%%
-az2 = az3;
+
 %%
 close all;
 num_R = 35;
@@ -165,9 +161,9 @@ R = R_list(i);
 delta_R = 1;
 I_R = rwnorm(distances_to_head - R) < delta_R;
 plot3v(new_centered(I_R,:),'.');hold on;
-
 close all;
-plot3v(new_centered(I_R,:),'.');axis equal; 
+plot3v(new_centered(I_R,:),'.');axis equal;
+
 %%
 close all;
 num_R = 20;
@@ -175,7 +171,7 @@ R_list = linspace(350,850,num_R);
 % az_list = linspace();
 clr = viridis(num_R);
 az_range = pi/4;
-for i = 1:num_R
+for i = 10%1:num_R
     R = R_list(i);
     delta_R = 1;
     I_R = rwnorm(distances_to_head - R) < delta_R;
@@ -187,6 +183,8 @@ for i = 1:num_R
     ;
 end
 %%
+num_R = 20;
+R_list = linspace(350,850,num_R);
 % binning and averaging...
 num_az = 100;
 az_range = pi/4;
@@ -194,6 +192,8 @@ delta_az = pi/100;
 az_bin = linspace(-az_range/2,az_range/2,num_az);
 
 binned_data = zeros(num_az,num_R);
+binned_data_min = zeros(num_az,num_R);
+binned_data_max = zeros(num_az,num_R);
 
 % given fixed R
 for i = 1:num_R
@@ -203,24 +203,48 @@ for i = 1:num_R
         I = rwnorm(az2 - az_bin(j)) < delta_az;    
         % plot(az2(I_R&I),el(I_R&I),'.');hold on;    
         binned_data(j,i) = mean(el(I_R&I));
+        binned_data_min(j,i) = min(el(I_R&I));
+        binned_data_max(j,i) = max(el(I_R&I));
     end
 end
+
 %%
-plot(az_bin,binned_data(:,1:end),'o-');
+close all;
+plot(az_bin,binned_data(:,1:end),'.-');hold on;
+plot(az_bin,binned_data_min(:,1:end),'ro-');
+plot(az_bin,binned_data_max(:,1:end),'bo-');
 %%
 close all;
 dip_positions = zeros(num_R,3);
 
 az_bin_back = mod(az_bin-pi,2*pi);
+
+num_R = 20;
+R_list = linspace(350,850,num_R);
 for i = 1:num_R
     tmp = binned_data(:,i);
     [el_min,I_min] = min(tmp);
-    plot(az_bin,tmp);hold on;
-    plot(az_bin(I_min),el_min,'o');
+    plot(az_bin,tmp,'.-');hold on;
+    plot(az_bin(I_min),el_min,'.-');
+    
+    pp = spline(az_bin,tmp);
+    xx = linspace(min(az_bin),max(az_bin),100);
+    yy = spline(az_bin,tmp,xx);
+    plot(xx,yy,'-');
 
-    [x,y,z] = sph2cart(az_bin_back(I_min),el_min,R_list(i));
+    dfdx = fnder(pp);    
+    x0 = fnzeros(dfdx);
+    x0 = x0(1);
+    y0 = ppval(pp,x0);
+    plot(x0,y0,'o');    
+
+    % [x,y,z] = sph2cart(az_bin_back(I_min),el_min,R_list(i));
+    [x,y,z] = sph2cart(mod(x0-pi,2*pi),y0,R_list(i));
     dip_positions(i,:) = [x,y,z];
 end
+%%
+
+
 %%
 close all;
 plot3v(dip_positions,'o');axis equal;hold on;
@@ -240,7 +264,7 @@ axis equal;
 
 %%
 num_line_points = 200;
-line_points = cen + ori.*linspace(-750,250,num_line_points)';
+line_points = cen + ori.*linspace(-750,500,num_line_points)';
 
 R_search = 15;
 
@@ -251,13 +275,19 @@ for i = 1:num_line_points
     I = rwnorm(new_centered - line_points(i,:)) < R_search;
     plot3v(new_centered(I,:),'.');
 end
+
 %%
 close all;
-crease_positions = zeros(num_line_points,3);
+crease_positions = NaN(num_line_points,3);
 for i = 1:num_line_points
     I = rwnorm(new_centered - line_points(i,:)) < R_search;
     % plot3v(new_centered(I,:),'.');hold on;
-    crease_positions(i,:) = mean(new_centered(I,:));
+    % crease_positions(i,:) = mean(new_centered(I,:));
+    if nnz(I) > 0
+        [~,I_min] = min(new_centered(I,3));
+        tmp = find(I);
+        crease_positions(i,:) = new_centered(tmp(I_min),:);
+    end
 end
 %%
 close all;
@@ -268,12 +298,16 @@ plot3v(crease_positions,'.');hold on;
 
 real_center = crease_positions(I_max,:);
 tail = crease_positions(I_min,:);
-plot3v(real_center,'o')
+plot3v(real_center,'ro','linewidth',3);
+plot3v(tail,'ro','linewidth',3);
+plot3v(new_centered(1:500:end,:),'.');
 %%
 [az_crease,el_crease,r_crease] = cart2sph(crease_positions(60:end,1),crease_positions(60:end,2),crease_positions(60:end,3));
+% [az_crease,el_crease,r_crease] = cart2sph(dip_positions(:,1),dip_positions(:,2),dip_positions(:,3));
 
 %%
 mean(az_crease,'omitnan')
+median(az_crease,'omitnan')
 %%
 close all;
 plot(az_crease)
@@ -292,11 +326,11 @@ plot3v(new_new_centered(1:500:end,:),'.');
 
 %%
 % [az_tail,el_tail,r_tail] = cart2sph(new_new_tail(:,1),new_new_tail(:,2),new_new_tail(:,3));
-az_tail = mean(az_crease);
+az_tail = median(az_crease,'omitnan');
 %%
 [new_az,new_el,new_r] = cart2sph(new_new_centered(:,1),new_new_centered(:,2),new_new_centered(:,3));
 %%
-[x,y,z] = sph2cart(new_az - az_tail + pi,new_el - el_tail,new_r);
+[x,y,z] = sph2cart(new_az - az_tail,new_el - el_tail,new_r);
 new_new_centered2 = [x,y,z];
 close all;
 plot3v(new_new_centered(1:500:end,:),'.');hold on;
@@ -306,12 +340,7 @@ grid on
 close all;
 plot(new_new_centered2(1:500:end,2),new_new_centered2(1:500:end,3),'.');
 grid on
-%%
-I_neg = new_new_centered2(:,2) < 0;
-I_pos = new_new_centered2(:,2) >= 0;
-%%
-mean(new_new_centered2(I_pos,:))
-mean(new_new_centered2(I_neg,:))
+
 %%
 % rotx = @(t) [1 0 0; 0 cos(t) -sin(t) ; 0 sin(t) cos(t)] ;
 % roty = @(t) [cos(t) 0 sin(t) ; 0 1 0 ; -sin(t) 0  cos(t)] ;
@@ -325,26 +354,11 @@ for i = 1:size(new_new_centered2,1)
     rotated(i,:) = (R*pt')';
 end
 %%
-mean(new_new_centered2(I_pos,:))
-mean(new_new_centered2(I_neg,:))
-%%
-I_neg = rotated(:,2) < 0;
-I_pos = rotated(:,2) >= 0;
-
-mean(rotated(I_pos,:))
-mean(rotated(I_neg,:))
-%%
-close all;
-plot3v(new_new_centered2(1:500:end,:),'.');hold on;
-plot3v(rotated(1:500:end,:),'.');
-axis equal;
-%%
 clc
 x0 = -0.005;
 % options = ;
 x_opt = fminsearch(@(x) objective_function(new_new_centered2,x),x0);
-%%
-objective_function(new_new_centered2,x_opt)
+% objective_function(new_new_centered2,x_opt)
 
 %%
 rotated = zeros(size(new_new_centered2));
@@ -352,7 +366,7 @@ for i = 1:size(new_new_centered2,1)
     pt = new_new_centered2(i,:);
     rotated(i,:) = (rotx(x_opt)*pt')';
 end
-%%
+%
 close all;
 % plot3v(new_new_centered2(1:500:end,:),'.');hold on;
 plot3v(rotated(1:500:end,:),'.');
@@ -360,6 +374,7 @@ axis equal;
 
 %%
 [az,el,r] = cart2sph(rotated(:,1),rotated(:,2),rotated(:,3));
+
 %%
 num_R = 35;
 R_list = linspace(10,850,num_R);
@@ -388,36 +403,45 @@ close all;
 plot3v(rotated(I_R,:),'.');
 %%
 close all;
-plot(az(I_R),el(I_R),'.');
-%%
-az2 = az + pi;
-az2(az2 > pi) = az2(az2 > pi) - 2*pi;
+num_R = 5;
+R_list = linspace(350,850,num_R);
 
-close all;
-plot(az2(I_R),el(I_R),'.');
-%%
+I_az = abs(az) < 0.1;
+
+for i = 2%1:num_R
+    R = R_list(i);
+    I_R = rwnorm(r - R) < delta_R;    
+    plot(az(I_R&I_az),el(I_R&I_az),'.');hold on;
+end
 
 %%
-
-num_az = 250;
-az_range = 0.2;
+num_az = 100;
+az_range = 0.5;
 delta_az = 0.01;
 offset = -0.02;
 az_bin = linspace(-az_range/2-offset,az_range/2-offset,num_az)';
 
 num_R = 5;
 binned_data = zeros(num_az,num_R);
+binned_data2 = zeros(num_az,num_R);
 R_list = linspace(350,850,num_R);
 
 % az2 = mod(az+pi,-2*pi);
 % given fixed R
+
+binned_data = zeros(num_R,num_az);
+binned_data2 = zeros(num_R,num_az);
+binned_data3 = zeros(num_R,num_az);
+
 for i = 1:num_R
     I_R = rwnorm(r - R_list(i)) < delta_R;
     binned_el = zeros(num_az,1);
     for j = 1:num_az
-        I = rwnorm(az2 - az_bin(j)) < delta_az;
-        % plot(az2(I_R&I),el(I_R&I),'.');hold on;    
+        I = rwnorm(az - az_bin(j)) < delta_az;
+        % plot(az2(I_R&I),el(I_R&I),'.');hold on;
         binned_data(j,i) = min(el(I_R&I));
+        binned_data2(j,i) = max(el(I_R&I));
+        binned_data3(j,i) = mean(el(I_R&I));
     end
 end
 
@@ -428,6 +452,58 @@ clc
 [x,y,z] = sph2cart(az(I_R&I),binned_data(:,i),RR);
 
 %%
+close all;
+plot(binned_data3);hold on;
+plot(binned_data);
+plot(binned_data2);
+%%
+% crease angle - max
+close all;
+plot(az_bin,binned_data2,'.-');
+
+%%
+close all;
+plot(az_bin,binned_data3(:,1),'o');hold on;
+
+i = 1;
+tmp = binned_data3(:,i);
+[~,I_min] = min(tmp);
+
+plot(az_bin(I_min),tmp(I_min),'ro','linewidth',3);
+
+plot(az_bin(I_min-5:I_min-1),tmp(I_min-5:I_min-1),'ro-');
+plot(az_bin(I_min:I_min+4),tmp(I_min:I_min+4),'ro-');
+
+%%
+pp = spline(az_bin,tmp);
+dfdx = fnder(pp);
+
+x0 = fnzeros(dfdx);
+x0 = x0(1);
+y0 = ppval(pp,x0);
+
+close all;
+plot(az_bin,binned_data3(:,1),'o');hold on;
+fnplt(pp);
+plot(x0,y0,'ro','linewidth',3);
+%
+[~,I_min] = min(abs(tmp - y0));
+plot(az_bin(I_min+5:I_min+15),tmp(I_min+5:I_min+15),'ro-');
+plot(az_bin(I_min-16:I_min-6),tmp(I_min-16:I_min-6),'bo-');
+
+x_left = az_bin(I_min+5:I_min+15);
+y_left = tmp(I_min+5:I_min+15);
+
+x_right = az_bin(I_min-16:I_min-6);
+y_right = tmp(I_min-16:I_min-6);
+
+%%
+p_left = polyfit(x_left,y_left,1);
+p_right = polyfit(x_right,y_right,1);
+%%
+p_left
+p_right
+% goodness of fitting?
 
 %%
 close all;
@@ -436,13 +512,14 @@ hold on;
 plot3v(rotated(I_R,:),'.');
 %%
 close all;
-plot(az_bin,binned_data(:,1:end),'o-');
-
+plot(az_bin,binned_data,'ro-');
 hold on;
+plot(az_bin,binned_data2,'bo-');
 
 % need a bit of re-adjustment; why?
 %%
-
+close all;
+plot(az_bin,binned_data,'ro-');
 
 %%
 % so, crease angle...
@@ -457,7 +534,7 @@ R_list = linspace(350,850,num_R);
 
 az2 = mod(az+pi/2,-2*pi);
 az2 = az;
-az2(az > pi) = -az(az > pi);
+az2(az > pi) = az(az > pi) - 2*pi;
 
 az_bin = linspace(-az_range/2,az_range/2,num_az);
 
