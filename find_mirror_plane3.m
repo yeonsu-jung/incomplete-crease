@@ -504,6 +504,27 @@ p_right = polyfit(x_right,y_right,1);
 p_left
 p_right
 % goodness of fitting?
+%%
+binned_data_all = zeros(num_R,num_az);
+
+az_bin_all = linspace(-pi,pi,num_az)';
+
+for i = 1:num_R
+    I_R = rwnorm(r - R_list(i)) < delta_R;
+    binned_el = zeros(num_az,1);
+
+    for j = 1:num_az
+        I = rwnorm(az - az_bin_all(j)) < delta_az;
+        % plot(az2(I_R&I),el(I_R&I),'.');hold on;
+        
+        binned_data_all(i,j) = mean(el(I_R&I));        
+    end
+end
+%%
+close all;
+plot(az_bin_all',binned_data_all','o-');
+
+print('test_inverse_halfcrease_04.png','-dpng','-r600');
 
 %%
 close all;
