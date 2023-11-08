@@ -1,21 +1,15 @@
 load('zstack_clean.mat')
 %%
-
 crop = imcrop3(zstack_clean,[700,700,1,400,400,370]);
-
 volshow2(crop);
 %%
 ind = find(zstack_clean);
-
 center = [968,942,347];
-
 [X,Y,Z] = ind2sub(size(zstack_clean),ind);
-
 point_cloud = [X,Y,Z];
 point_cloud = point_cloud - center;
 
 %% point_cloud - center;
-
 addpath(genpath('../entanglement/functions'))
 all_points = point_cloud(1:1:end,:);
 close all;
@@ -36,6 +30,7 @@ plot3v(all_points,'.');
 %%
 close all;
 plot_pointcloud(all_points);
+
 %%
 centered = all_points - mean(all_points);
 %%
