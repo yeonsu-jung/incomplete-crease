@@ -2,3 +2,10 @@
 *.asv
 *.png
 .DS_Store
+results/InverseHalfCrease08_data_output.mat
+results/InverseHalfCrease04_data_output.mat
+results/InverseHalfCrease02_data_output.mat
+results/HalfCrease12_data_output.mat
+results/HalfCrease08_data_output.mat
+results/HalfCrease04_data_output.mat
+results/HalfCrease02_data_output.mat
