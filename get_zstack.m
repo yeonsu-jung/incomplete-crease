@@ -3,7 +3,7 @@ clear all
 close all
  
 out_path = '/Users/yeonsu/Dropbox (Harvard University)/xray-data/z-stacks';
-image_dir_path = '/Users/yeonsu/Dropbox (Harvard University)/xray-data/zStack_HalfCrease_02';
+image_dir_path = '/Users/yeonsu/Dropbox (Harvard University)/xray-data/zStack_InverseHalfCrease_08';
 
 fname = dir([image_dir_path,'/*.tif']);
 num_img = numel(fname)
@@ -48,7 +48,7 @@ clc
  
 %%
 close all
-stack = zeros(m,n,zl2-zl1+1,'logical');
+zstack = zeros(m,n,zl2-zl1+1,'logical');
  
 pages = 1;
 tic
@@ -58,26 +58,27 @@ for idx = zl1:zl2
 %     raw = imcrop(raw,pos);
 %     filtered = imdiffusefilt(raw);
 %     binarized = imbinarize(filtered,T);
-    binarized = raw > TH;
-    stack(:,:,pages) = binarized;
+    binarized = imbinarize(raw,T*0.95);
+    % binarized = raw > TH;
+    zstack(:,:,pages) = binarized;
     pages = pages + 1;
 end
 toc
 %
 full_stack_folder = fullfile(out_path,sample_name)
 mkdir(full_stack_folder)
-%
+%%
 % stack_path = fullfile(full_stack_folder,'full_stack0.mat')
 stack_path = fullfile(full_stack_folder,'zstack.mat')
-save(stack_path,'stack','-v7.3');
+save(stack_path,'zstack','-v7.3');
 %%
 close all;
-crop = imcrop3(stack,[400,400,400,499,499,499]);
+crop = imcrop3(zstack,[400,400,400,499,499,499]);
 volshow(crop)
 %%
 close all;
-small = imresize3(stack,0.5);
-volshow(small);
+% small = imresize3(zstack,0.5);
+volshow(zstack);
 %%
 eroded = imerode(stack,strel('sphere',2));
 cc = bwconncomp(eroded);
