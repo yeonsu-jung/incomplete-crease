@@ -9,3 +9,4 @@ results/HalfCrease12_data_output.mat
 results/HalfCrease08_data_output.mat
 results/HalfCrease04_data_output.mat
 results/HalfCrease02_data_output.mat
+*.mat
