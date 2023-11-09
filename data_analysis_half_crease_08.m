@@ -73,11 +73,11 @@ plot(0,0,'ro','linewidth',2);
 % binning and averaging...
 num_R = 20;
 delta_R = 1;
-R_list = linspace(350,max(r),num_R);
+R_list = linspace(350,max(r0),num_R);
 
 %%
-i_start = 2;
-i_end = 15;
+i_start = 1;
+i_end = 12;
 
 close all;
 for i = i_start:i_end
@@ -108,15 +108,15 @@ binned_data_max = zeros(num_az,num_R);
 
 % given fixed R
 for i = 1:num_R
-    I_R = rwnorm(r.*cos(el) - R_list(i)) < delta_R;
+    I_R = rwnorm(r0.*cos(el0) - R_list(i)) < delta_R;
     binned_el = zeros(num_az,1);
     for j = 1:num_az
-        I = mod(rwnorm(az - az_bin(j)),2*pi) < delta_az;
+        I = mod(rwnorm(az0 - az_bin(j)),2*pi) < delta_az;
         % plot(az2(I_R&I),el(I_R&I),'.');hold on;
         if nnz(I_R&I) > 0
-            binned_data(j,i) = mean(el(I_R&I));
-            binned_data_min(j,i) = min(el(I_R&I));
-            binned_data_max(j,i) = max(el(I_R&I));
+            binned_data(j,i) = mean(el0(I_R&I));
+            binned_data_min(j,i) = min(el0(I_R&I));
+            binned_data_max(j,i) = max(el0(I_R&I));
         end
     end
 end
@@ -134,6 +134,7 @@ dip_positions = zeros(i_start - i_end + 1,3);
 k = 1;
 for i = i_start:i_end
     tmp = binned_data(:,i);
+    tmp = smooth(tmp);
     [el_min,I_min] = max(tmp);
     plot(az_bin,tmp,'.-');hold on;
     plot(az_bin(I_min),el_min,'.-');
@@ -158,6 +159,7 @@ end
 
 
 %%
+
 close all;
 plot3v(dip_positions,'o');axis equal;hold on;
 
@@ -177,6 +179,11 @@ axis equal;
 %%
 num_line_points = 200;
 line_points = cen + ori.*linspace(-750,500,num_line_points)';
+
+[~,~,r_tmp] = cart2sph(line_points(:,1),line_points(:,2),line_points(:,3));
+I_inside = r_tmp < 750;
+line_points = line_points(I_inside,:);
+num_line_points = size(line_points,1);
 
 R_search = 30;
 close all;
@@ -225,8 +232,8 @@ plot3v(centered(1:500:end,:),'.');
 [~,I_min] = min(crease_positions(:,3));
 
 temp_center = crease_positions(I_max,:);
-tail = crease_positions(I_max,:);
-temp_center = [6.69,-45.45,77.73];
+tail = crease_positions(I_min,:);
+% temp_center = [6.69,-45.45,77.73];
 
 arbitrary_chord_vector = line_points(1,:)-temp_center;
 foot = temp_center + arbitrary_chord_vector - dot(arbitrary_chord_vector,ori)*ori;
@@ -488,8 +495,8 @@ close all;
 plot(az_bin,binned_data3(1,:),'o');hold on;
 
 i = 1;
-tmp = binned_data3(i,:);
-[~,I_min] = max(tmp);
+tmp = smooth(binned_data3(i,:));
+[~,I_min] = min(tmp);
 
 plot(az_bin(I_min),tmp(I_min),'ro','linewidth',3);
 plot(az_bin(I_min-5:I_min-1),tmp(I_min-5:I_min-1),'ro-');
@@ -509,8 +516,8 @@ fnplt(pp);
 plot(x0,y0,'ro','linewidth',3);
 %
 [~,I_min] = min(abs(tmp - y0));
-plot(az_bin(I_min+5:I_min+15),tmp(I_min+5:I_min+15),'ro-');
-plot(az_bin(I_min-16:I_min-6),tmp(I_min-16:I_min-6),'bo-');
+plot(az_bin(I_min+10:I_min+20),tmp(I_min+10:I_min+20),'ro-');
+plot(az_bin(I_min-20:I_min-10),tmp(I_min-20:I_min-10),'bo-');
 
 x_left = az_bin(I_min+5:I_min+15);
 y_left = tmp(I_min+5:I_min+15);
