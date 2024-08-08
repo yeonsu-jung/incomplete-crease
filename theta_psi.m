@@ -1,16 +1,19 @@
-run('../entanglement/scripts/setup.m')
+% run('../entanglement/scripts/setup.m')
 %%
-dir_return = dir('results/data_half_*.txt')
+dir_return = dir('results/data_half_*.txt');
+num_datasets = numel(dir_return);
+
 
 close all;
 lgd_text = {};
-cmap = viridis(4);
+cmap = viridis(num_datasets);
 k = 1;
-set_figure(9,5);
+% set_figure(9,5);
+figure(unit='centimeter',position=[0,0,9,5]);
 for i = [2,1,3,4]%1:num_datasets
-    theta_psi = readmatrix(fullfile(dir_return(i).folder,dir_return(i).name));
-    az = theta_psi(:,1);
-    el = theta_psi(:,2);
+    theta_psi_ = readmatrix(fullfile(dir_return(i).folder,dir_return(i).name));
+    az = theta_psi_(:,1);
+    el = theta_psi_(:,2);
 
     [~,filename] = fileparts(dir_return(i).name);
 
@@ -20,7 +23,7 @@ for i = [2,1,3,4]%1:num_datasets
 
     % crease_angle = str2num(tmp{1})
     
-    plot(az,el,'o','color',cmap(k,:));hold on;    
+    plot(az,el,'o','color',cmap(k,:));hold on;
     k = k + 1;
     
 end
@@ -28,22 +31,23 @@ lgd = legend(lgd_text);
 lgd.Location = 'bestoutside';
 xlabel('$\theta$');
 ylabel('$\psi$')
-print(gcf,'results/half_crease.png','-dpng','-r600');
+% print(gcf,'results/half_crease.png','-dpng','-r600');
 
 %%
 dir_return = dir('results/data_inverse_*.txt')
 num_datasets = numel(dir_return);
 close all;
 lgd_text = {};
-cmap = viridis(3);
+cmap = viridis(5);
 k = 1;
 
-set_figure(9,5);
+% set_figure(9,5);
+figure(unit='centimeter',position=[0,0,9,5]);
 for i = 1:num_datasets
-    theta_psi = readmatrix(fullfile(dir_return(i).folder,dir_return(i).name));
-    az = theta_psi(:,1);
+    theta_psi_ = readmatrix(fullfile(dir_return(i).folder,dir_return(i).name));
+    az = theta_psi_(:,1);
     az = az - min(az);
-    el = theta_psi(:,2);
+    el = theta_psi_(:,2);
 
     [~,filename] = fileparts(dir_return(i).name);
 
@@ -62,3 +66,6 @@ lgd.Location = 'bestoutside';
 xlabel('$\theta$');
 ylabel('$\psi$')
 print(gcf,'results/inverse_half_crease.png','-dpng','-r600');
+
+%%
+% surfature()
