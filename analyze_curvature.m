@@ -20,14 +20,12 @@ colormap(viridis)
 %%
 [M,I] = max(Z);
 
-
 %%
 close all;
 orthosliceViewer(zstack_clean)
 %%
 center = [968,942,347];
 point_cloud = [X,Y,Z];
-
 point_cloud = point_cloud - center;
 
 %%
