@@ -45,7 +45,7 @@ for i = 1:size(centered,1)
 end
 
 close all;
-plot3v(centered(1:500:end,:),'o');
+plot3v(centered(1:500:end,:),'.');
 %%
 % crease at -y axis
 ;
