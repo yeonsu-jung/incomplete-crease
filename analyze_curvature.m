@@ -65,6 +65,19 @@ pcshow(ptCloud)
 %%
 colormap(magma)
 %%
+% sampling
+meshgrid()
+
+
+
+
+
+
+
+
+%%
+size(X)
+%%
 sparse_points = all_points(1:1:end,:);
 %%
 tail = [-857,68,-193];
