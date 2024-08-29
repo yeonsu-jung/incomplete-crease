@@ -11,3 +11,4 @@ results/HalfCrease04_data_output.mat
 results/HalfCrease02_data_output.mat
 *.mat
 paper/Random_Origami.pdf
+@double/display.m
