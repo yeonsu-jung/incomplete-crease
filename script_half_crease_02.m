@@ -36,6 +36,12 @@ PlotThetaPsi(az,el,r, min_r, max(r), num_R, delta_R);
 
 %%
 
+%%
+num_az = 400;
+az_range = 1;
+offset = -1.38;
+delta_az = pi/100;
+
 
 az_bin = linspace(-az_range/2+offset,az_range/2+offset,num_az);
 binned_data = zeros(num_az,num_R);
