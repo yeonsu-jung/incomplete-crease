@@ -49,18 +49,27 @@ plot3v(centered(1:500:end,:),'.');
 %%
 % save('centered_','centered');
 %%
-x = centered(1:500:end,1);
-y = centered(1:500:end,2);
-z = centered(1:500:end,3);
+% I = all((centered - mean(centered)).^2 < 100^2,2);
+x = centered(1:100:end,1);
+y = centered(1:100:end,2);
+z = centered(1:100:end,3);
 
-x_unique = unique(x);
-y_unique = unique(y);
-
-% Create a meshgrid from the unique x and y values
-[X, Y] = meshgrid(x_unique, y_unique);
-
-% Interpolate z values onto the meshgrid
+lb = -500;
+ub = 500;
+xq = lb:30:ub;
+yq = lb:30:ub;
+[X,Y] = meshgrid(xq,yq);
 Z = griddata(x, y, z, X, Y);
+%%
+[X,Y,Z] = GetMesh([x,y,z],xq,yq);
+
+%%
+close all;
+mesh(X,Y,Z);
+hold on
+% plot3(x,y,z,".")
+
+
 %%
 tic
 [K,H,Pmax,Pmin] = surfature(X,Y,Z);
@@ -82,7 +91,7 @@ close all;
 figure;
 surf(X, Y, Z, K);
 shading interp;
-caxis([-1,1]*1e-2)
+% caxis([-1,1]*1e-2)
 
 % Applying a nice colormap
 colormap(parula);  % Example colormap, you can use 'jet', 'hot', etc.
