@@ -47,8 +47,51 @@ end
 close all;
 plot3v(centered(1:500:end,:),'.');
 %%
-% crease at -y axis
-;
+% save('centered_','centered');
+%%
+x = centered(1:500:end,1);
+y = centered(1:500:end,2);
+z = centered(1:500:end,3);
+
+x_unique = unique(x);
+y_unique = unique(y);
+
+% Create a meshgrid from the unique x and y values
+[X, Y] = meshgrid(x_unique, y_unique);
+
+% Interpolate z values onto the meshgrid
+Z = griddata(x, y, z, X, Y);
+%%
+tic
+[K,H,Pmax,Pmin] = surfature(X,Y,Z);
+toc
+
+K(isnan(K)) = 0;
+H(isnan(H)) = 0;
+%%
+max_H = max(H(:));
+min_H = min(H(:));
+
+% K_normalized = abs((H - min_H)/(max_H - min_H));
+%%
+close all;
+histogram(K)
+
+%%
+close all;
+figure;
+surf(X, Y, Z, K);
+shading interp;
+caxis([-1,1]*1e-2)
+
+% Applying a nice colormap
+colormap(parula);  % Example colormap, you can use 'jet', 'hot', etc.
+colorbar;
+
+xlabel('X-axis');
+ylabel('Y-axis');
+zlabel('Z-axis');
+
 %%
 centered = rt;
 clear rt
